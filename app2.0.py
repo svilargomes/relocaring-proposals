@@ -150,9 +150,9 @@ Our team works alongside qualified lawyers and solicitors to ensure that every a
 
 DEFAULT_FEE_TEXT = "The fees outlined below are based on RELOCARING's understanding of your requirements at this stage. All fees are indicative and may be revised following review of further documentation. VAT, public costs, government fees, translations and certified copies are not included unless otherwise stated."
 
-DEFAULT_PAYMENT = "50% upon acceptance of this proposal  +  50% upon submission of the process"
+DEFAULT_PAYMENT = """50% upon acceptance of this proposal  +  50% upon submission of the process
 
-DEFAULT_BULLETS = """Fees are indicative and based on information received. Additional details may impact final fees.
+Fees are indicative and based on information received. Additional details may impact final fees.
 All services must be authorised in writing prior to commencement.
 Services outside regular hours, weekends or public holidays incur a 30% surcharge.
 This proposal is valid for 60 days from the date of issue."""
@@ -195,19 +195,22 @@ Interest on late payment applies in accordance with Portuguese law.
 10. Cancellations
 Relocation: cancellable free of charge up to two weeks before arrival if under 2 hours of work performed. Immigration: 50% due if expertise already provided; 100% due after submission."""
 
+DEFAULT_FOOTNOTES = """* Public costs, translations, certified copies, document legalisations and VAT not included.
+* Displacement fees apply for distances exceeding 20 km from the Lisbon radius."""
+
 DEFAULT_CARDS = {
     "VISA & IMMIGRATION":  "Full management of your visa application, documentation review, AIMA appointments and residence permit.",
     "NATIONALITY PROCESS": "End-to-end nationality application managed by a qualified lawyer/solicitor, from checklist to IRN submission.",
     "HOME SEARCH":         "Personalised property search with accompanied viewings and lease negotiation support.",
     "SCHOOL SEARCH":       "Identification and enrolment support for international and Portuguese schools.",
     "ORIENTATION TOUR":    "Guided half or full-day tour of the Lisbon area — neighbourhoods, services and lifestyle.",
-    "TAX & LEGAL ADVICE":  "NIF, NISS, bank account, health centre registration and fiscal representation services.",
+    "SERVICES":            "NIF, NISS, bank account, health centre registration and fiscal representation services.",
 }
 
 # ── PDF generator ─────────────────────────────────────────────────────
 def generate_pdf(client_name, service_description, proposal_date,
                  proposal_number, services, intro_text, cards_overview,
-                 fee_text, payment_text, bullets_text, privacy_text, tc_text):
+                 fee_text, payment_text, footnotes_text, privacy_text, tc_text):
 
     W, H = A4
     buffer = io.BytesIO()
@@ -378,8 +381,9 @@ def generate_pdf(client_name, service_description, proposal_date,
                                 ('TOPPADDING',(0,-1),(-1,-1),10)]))
     story.append(fee_t)
     story.append(Spacer(1, 0.35*cm))
-    story.append(Paragraph("* Public costs, translations, certified copies, document legalisations and VAT not included.", S_SMALL))
-    story.append(Paragraph("* Displacement fees apply for distances exceeding 20 km from the Lisbon radius.", S_SMALL))
+    for fn in footnotes_text.strip().split('\n'):
+        if fn.strip():
+            story.append(Paragraph(fn.strip(), S_SMALL))
     story.append(Spacer(1, 0.45*cm))
     pay_t = Table([[Paragraph("PAYMENT CONDITIONS", ps('pch', fontName='Helvetica-Bold', fontSize=8, textColor=TEAL_DARK, tracking=1)),
                    Paragraph("50% upon acceptance of this proposal  +  50% upon submission of the process",
@@ -502,13 +506,9 @@ with st.expander("📄 Fee Proposal text (Page 3)", expanded=False):
                             label_visibility="collapsed")
 
 with st.expander("💳 Payment Conditions text (Page 3)", expanded=False):
-    payment_text = st.text_area("", value=DEFAULT_PAYMENT, height=60, key="payment_text",
+    st.caption("First line goes inside the blue box. Each line after that becomes a ◆ bullet point.")
+    payment_text = st.text_area("", value=DEFAULT_PAYMENT, height=140, key="payment_text",
                                 label_visibility="collapsed")
-
-with st.expander("◆ Bullet points below payment conditions (Page 3)", expanded=False):
-    bullets_text = st.text_area("", value=DEFAULT_BULLETS, height=120, key="bullets_text",
-                                label_visibility="collapsed")
-    st.caption("One bullet point per line.")
 
 with st.expander("🔒 Notice of Terms of Use & Privacy Policy (Page 4)", expanded=False):
     privacy_text = st.text_area("", value=DEFAULT_PRIVACY, height=200, key="privacy_text",
@@ -517,6 +517,14 @@ with st.expander("🔒 Notice of Terms of Use & Privacy Policy (Page 4)", expand
 with st.expander("📋 Terms & Conditions (Page 5)", expanded=False):
     tc_text = st.text_area("", value=DEFAULT_TC, height=300, key="tc_text",
                            label_visibility="collapsed")
+
+st.markdown("---")
+
+# ── SECTION 2c: Footnotes ─────────────────────────────────────────────
+with st.expander("📌 Footnotes below fee table (Page 3)", expanded=False):
+    st.caption("One footnote per line.")
+    footnotes_text = st.text_area("", value=DEFAULT_FOOTNOTES, height=80, key="footnotes_text",
+                                  label_visibility="collapsed")
 
 st.markdown("---")
 
@@ -529,11 +537,21 @@ card_cols = st.columns(2)
 for idx, (title, desc) in enumerate(DEFAULT_CARDS.items()):
     with card_cols[idx % 2]:
         with st.expander(f"🔷 {title}", expanded=False):
-            include = st.checkbox("Include this card", value=True, key=f"card_{idx}")
+            include = st.checkbox("Include this card", value=False, key=f"card_{idx}")
             edited = st.text_area("Description", value=desc, height=70,
                                   key=f"card_desc_{idx}", disabled=not include)
             if include:
                 selected_cards[title] = edited
+
+# Custom card
+with st.expander("➕ Custom card (optional)", expanded=False):
+    custom_card_on = st.checkbox("Include a custom card", value=False, key="custom_card_on")
+    custom_card_title = st.text_input("Card title", placeholder="e.g. DEPARTURE MANAGEMENT",
+                                      key="custom_card_title", disabled=not custom_card_on)
+    custom_card_desc  = st.text_area("Card description", placeholder="Brief description of the service...",
+                                     height=70, key="custom_card_desc", disabled=not custom_card_on)
+    if custom_card_on and custom_card_title.strip() and custom_card_desc.strip():
+        selected_cards[custom_card_title.strip().upper()] = custom_card_desc.strip()
 
 st.markdown("---")
 
@@ -648,7 +666,7 @@ if st.button("⬇️ Generate & Download PDF", type="primary", use_container_wid
                 pdf_buffer, grand_total = generate_pdf(
                     client_name, service_description, proposal_date_str,
                     proposal_number, services, intro_text, selected_cards,
-                    fee_text, payment_text, bullets_text, privacy_text, tc_text
+                    fee_text, payment_text, footnotes_text, privacy_text, tc_text
                 )
                 filename = f"Relocaring_Proposal_{client_name.replace(' ', '_')}.pdf"
                 st.download_button(
