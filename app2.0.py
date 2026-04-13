@@ -385,19 +385,6 @@ def generate_pdf(client_name, service_description, proposal_date,
         if fn.strip():
             story.append(Paragraph(fn.strip(), S_SMALL))
     story.append(Spacer(1, 0.45*cm))
-    pay_t = Table([[Paragraph("PAYMENT CONDITIONS", ps('pch', fontName='Helvetica-Bold', fontSize=8, textColor=TEAL_DARK, tracking=1)),
-                   Paragraph("50% upon acceptance of this proposal  +  50% upon submission of the process",
-                             ps('pcb', fontName='Helvetica', fontSize=8.5, textColor=GREY_TEXT))]],
-                  colWidths=[5.5*cm, W-4.0*cm-5.5*cm])
-    pay_t.setStyle(TableStyle([('BACKGROUND',(0,0),(-1,-1),TEAL_LIGHT),('LINEABOVE',(0,0),(-1,-1),2.5,TEAL),
-                                ('LINEBEFORE',(0,0),(0,-1),2.5,RED),('TOPPADDING',(0,0),(-1,-1),8),
-                                ('BOTTOMPADDING',(0,0),(-1,-1),8),('LEFTPADDING',(0,0),(-1,-1),10),
-                                ('RIGHTPADDING',(0,0),(-1,-1),10),('VALIGN',(0,0),(-1,-1),'MIDDLE')]))
-    story.append(pay_t)
-    story.append(Spacer(1, 0.45*cm))
-    for b in bullets_text.strip().split('\n'):
-        if b.strip():
-            story.append(Paragraph(f'<font color="#C42728">◆</font>  {b.strip()}', S_BULLET))
 
     story.append(NextPageTemplate('privacy'))
     story.append(PageBreak())
