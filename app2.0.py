@@ -60,7 +60,8 @@ LOGO_SMALL = os.path.join(BASE_DIR, 'logo_relocaring_footer.png')
 COMPANY_PHONE   = "+351 910 147 707 / 918 841 086"
 COMPANY_EMAIL   = "info@relocaring.com"
 COMPANY_WEB     = "www.relocaring.com"
-COMPANY_ADDRESS = "Rua D. Luís da Cunha, 63 · Casa Nortada · 2755-274 Alcabideche, Cascais"
+COMPANY_ADDRESS  = "Rua D. Luís da Cunha, 63 · Casa Nortada · 2755-274 Alcabideche, Cascais"
+LINKEDIN_URL     = "https://www.linkedin.com/in/relocaring-lda-6045ba216/"
 
 # ── Full 2026 service catalogue  (label: (pdf_text, price)) ──────────
 SERVICE_CATALOGUE = {
@@ -165,35 +166,37 @@ Your personal data may be shared with our business partners and relevant public 
 
 At any time you may request access to, update, withdraw consent for, or request deletion of your personal data by contacting info@relocaring.com."""
 
-DEFAULT_TC = """1. Validity & Payment
-This proposal is valid for 60 days. Fees are invoiced 50% upon acceptance and 50% upon submission. All services must be authorised in writing.
+DEFAULT_TC = """1. This proposal is valid for 60 days. The fees should be paid once the process is submitted.
 
-2. Pricing & VAT
-All prices are in Euros and subject to VAT. Each invoice will be itemised by service. Fees are estimates; additional details may impact final costs.
+2. All services must be authorized in writing. For any services falling outside the above scope of work, fees should be pre-agreed.
 
-3. Exclusions
-Services do not include translation fees, taxes, Government fees, courier costs, bank charges or other applicable third-party charges.
+3. All prices are in Euros and subject to applicable VAT.
 
-4. Liability
-RELOCARING assumes no responsibility for non-execution due to reasons beyond its control. Timing depends on public entities and timely delivery of documentation.
+4. These fees are an estimation based on information that was provided. Any new details that emerge at a later stage might impact the process and therefore additional fees may incur.
 
-5. Out-of-Hours Services
-Services outside regular business hours, on weekends or public holidays incur a 30% surcharge, unless otherwise agreed in advance.
+5. RELOCARING assumes no responsibility for the non-execution of the service for reasons beyond its control. The timing effectiveness depends on public entities and on the delivery of all the required documentation that should be provided by the client.
 
-6. Additional Hours
-Additional hours may be charged if the client: (a) fails to provide required documents in due time; (b) provides incomplete information; (c) requests out-of-scope services; or (d) requires extra hours due to their own actions.
+6. The budgets are based to perform the services during weekdays. Services performed outside regular working hours, weekends or bank holidays will be increased in 30% unless otherwise agreed upon.
 
-7. Third-Party Partners
-RELOCARING may engage qualified third-party partners for specific services. All legal matters are handled by lawyers or solicitors.
+7. The contracted services do not include: translation fees, legal fees (certifications, legalizations, apostilles), any taxes, public emoluments, government fees, express courier costs, bank charges, displacement fees and other applicable charges.
 
-8. Displacement Fees
-Fees apply for distances exceeding 20 km from the Lisbon radius at €0.42/km.
+8. RELOCARING reserves the right to establish partnerships with third parties for the provision of a particular service to ensure the efficient carrying out of the service.
 
-9. Late Payment
-Interest on late payment applies in accordance with Portuguese law.
+9. The Properties proposed will be subject to market conditions and the budget set by the client, these particulars may interfere with the number of properties shown.
 
-10. Cancellations
-Relocation: cancellable free of charge up to two weeks before arrival if under 2 hours of work performed. Immigration: 50% due if expertise already provided; 100% due after submission."""
+10. All legal matters concerning to any service provided in Portugal are handled by lawyers or solicitors.
+
+11. RELOCARING may charge additional hours, at the rate stipulated in the price list, if they are required to complete the work, whenever the client:
+a. Does not provide, in due time, the documents or information necessary for the service to be carried out;
+b. Provides incorrect or insufficient documentation or information, thereby disrupting proper service delivery;
+c. Asks for services not included in the initial proposal;
+d. Requires additional service hours, if proven to be the client's responsibility.
+
+12. Interest on late payment of invoices is applicable in accordance with Portuguese law.
+
+13. Cancellations:
+a. Relocation Services: The service may be cancelled free of charge up to two weeks before the arrival of the Client/assignee providing the consultant has not performed any search or spent more than 2 hours working on the file;
+b. Immigration/Documentation Services: Should any information on required documents, procedures or any other form of expertise have already been provided; the client will be charged 50% of the total fees. After the submission of the application documents, 100% of the total will be charged."""
 
 DEFAULT_FOOTNOTES = """* Public costs, translations, certified copies, document legalisations and VAT not included.
 * Displacement fees apply for distances exceeding 20 km from the Lisbon radius."""
@@ -264,6 +267,24 @@ def generate_pdf(client_name, service_description, proposal_date,
         c.drawString(2.2*cm, H*0.085-14, f'{COMPANY_PHONE}  ·  {COMPANY_WEB}')
         c.setFont('Helvetica',7.5); c.setFillColor(colors.HexColor('#A8CBE0'))
         c.drawString(2.2*cm, H*0.085-27, COMPANY_ADDRESS)
+
+        # LinkedIn icon — bottom right of cover teal strip
+        li_x = W - 2.8*cm
+        li_y = H*0.04
+        li_r = 10  # radius of circle
+        # Blue circle background
+        c.setFillColor(colors.HexColor('#0A66C2'))
+        c.circle(li_x, li_y, li_r, fill=1, stroke=0)
+        # White "in" text
+        c.setFillColor(colors.white)
+        c.setFont('Helvetica-Bold', 10)
+        c.drawCentredString(li_x, li_y - 3.5, 'in')
+        # Clickable link over the icon
+        from reportlab.lib.utils import ImageReader
+        c.linkURL(LINKEDIN_URL,
+                  (li_x - li_r, li_y - li_r, li_x + li_r, li_y + li_r),
+                  relative=0)
+
         c.restoreState()
 
     def bg_inner(c, doc, page_num=None):
@@ -349,6 +370,7 @@ def generate_pdf(client_name, service_description, proposal_date,
     story.append(Paragraph("SERVICES & FEES", S_LABEL))
     story.append(Spacer(1, 0.3*cm))
     story.append(Paragraph("Fee Proposal", S_SECTION))
+    story.append(Spacer(1, 0.25*cm))
     story.append(Paragraph(fee_text.replace("RELOCARING", "<b>RELOCARING</b>"), S_BODY))
     story.append(Spacer(1, 0.2*cm))
 
@@ -385,6 +407,30 @@ def generate_pdf(client_name, service_description, proposal_date,
         if fn.strip():
             story.append(Paragraph(fn.strip(), S_SMALL))
     story.append(Spacer(1, 0.45*cm))
+
+    # Payment conditions box + bullet points
+    pay_lines = [l for l in payment_text.strip().split('\n') if l.strip()]
+    pay_box_text = pay_lines[0] if pay_lines else ''
+    pay_bullets  = pay_lines[1:] if len(pay_lines) > 1 else []
+    pay_t = Table([[
+        Paragraph("PAYMENT CONDITIONS", ps('pch', fontName='Helvetica-Bold', fontSize=8, textColor=TEAL_DARK, tracking=1)),
+        Paragraph(pay_box_text, ps('pcb', fontName='Helvetica', fontSize=8.5, textColor=GREY_TEXT))
+    ]], colWidths=[5.5*cm, W-4.0*cm-5.5*cm])
+    pay_t.setStyle(TableStyle([
+        ('BACKGROUND',   (0,0),(-1,-1), TEAL_LIGHT),
+        ('LINEABOVE',    (0,0),(-1,-1), 2.5, TEAL),
+        ('LINEBEFORE',   (0,0),(0,-1),  2.5, RED),
+        ('TOPPADDING',   (0,0),(-1,-1), 8),
+        ('BOTTOMPADDING',(0,0),(-1,-1), 8),
+        ('LEFTPADDING',  (0,0),(-1,-1), 10),
+        ('RIGHTPADDING', (0,0),(-1,-1), 10),
+        ('VALIGN',       (0,0),(-1,-1), 'MIDDLE'),
+    ]))
+    story.append(pay_t)
+    story.append(Spacer(1, 0.45*cm))
+    for b in pay_bullets:
+        if b.strip():
+            story.append(Paragraph(f'<font color="#C42728">\u25c6</font>  {b.strip()}', S_BULLET))
 
     story.append(NextPageTemplate('privacy'))
     story.append(PageBreak())
