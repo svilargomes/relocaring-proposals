@@ -152,6 +152,11 @@ DEFAULT_FEE_TEXT = "The fees outlined below are based on RELOCARING's understand
 
 DEFAULT_PAYMENT = "50% upon acceptance of this proposal  +  50% upon submission of the process"
 
+DEFAULT_BULLETS = """Fees are indicative and based on information received. Additional details may impact final fees.
+All services must be authorised in writing prior to commencement.
+Services outside regular hours, weekends or public holidays incur a 30% surcharge.
+This proposal is valid for 60 days from the date of issue."""
+
 DEFAULT_PRIVACY = """As part of your immigration and relocation process with Relocaring, Lda, we are required to gather and process sensitive personal information about you. The security and privacy of your personal information is of the utmost importance to us.
 
 Your personal information will be stored in our secure database (SharePoint / Microsoft 365) and is always encrypted in transit and at rest. Physical copies are stored securely on-site and accessed only by your dedicated consultant when required for processing.
@@ -202,7 +207,7 @@ DEFAULT_CARDS = {
 # ── PDF generator ─────────────────────────────────────────────────────
 def generate_pdf(client_name, service_description, proposal_date,
                  proposal_number, services, intro_text, cards_overview,
-                 fee_text, payment_text, privacy_text, tc_text):
+                 fee_text, payment_text, bullets_text, privacy_text, tc_text):
 
     W, H = A4
     buffer = io.BytesIO()
@@ -386,11 +391,9 @@ def generate_pdf(client_name, service_description, proposal_date,
                                 ('RIGHTPADDING',(0,0),(-1,-1),10),('VALIGN',(0,0),(-1,-1),'MIDDLE')]))
     story.append(pay_t)
     story.append(Spacer(1, 0.45*cm))
-    for b in ["Fees are indicative and based on information received. Additional details may impact final fees.",
-              "All services must be authorised in writing prior to commencement.",
-              "Services outside regular hours, weekends or public holidays incur a <b>30% surcharge</b>.",
-              f"This proposal is valid for <b>60 days</b> from {proposal_date}."]:
-        story.append(Paragraph(f'<font color="#C42728">◆</font>  {b}', S_BULLET))
+    for b in bullets_text.strip().split('\n'):
+        if b.strip():
+            story.append(Paragraph(f'<font color="#C42728">◆</font>  {b.strip()}', S_BULLET))
 
     story.append(NextPageTemplate('privacy'))
     story.append(PageBreak())
@@ -501,6 +504,11 @@ with st.expander("📄 Fee Proposal text (Page 3)", expanded=False):
 with st.expander("💳 Payment Conditions text (Page 3)", expanded=False):
     payment_text = st.text_area("", value=DEFAULT_PAYMENT, height=60, key="payment_text",
                                 label_visibility="collapsed")
+
+with st.expander("◆ Bullet points below payment conditions (Page 3)", expanded=False):
+    bullets_text = st.text_area("", value=DEFAULT_BULLETS, height=120, key="bullets_text",
+                                label_visibility="collapsed")
+    st.caption("One bullet point per line.")
 
 with st.expander("🔒 Notice of Terms of Use & Privacy Policy (Page 4)", expanded=False):
     privacy_text = st.text_area("", value=DEFAULT_PRIVACY, height=200, key="privacy_text",
@@ -640,7 +648,7 @@ if st.button("⬇️ Generate & Download PDF", type="primary", use_container_wid
                 pdf_buffer, grand_total = generate_pdf(
                     client_name, service_description, proposal_date_str,
                     proposal_number, services, intro_text, selected_cards,
-                    fee_text, payment_text, privacy_text, tc_text
+                    fee_text, payment_text, bullets_text, privacy_text, tc_text
                 )
                 filename = f"Relocaring_Proposal_{client_name.replace(' ', '_')}.pdf"
                 st.download_button(
