@@ -142,9 +142,53 @@ SERVICE_CATALOGUE = {
 }
 
 # ── Default intro paragraphs ──────────────────────────────────────────
-DEFAULT_P1 = "Our sincere thanks for choosing RELOCARING to assist you with your relocation and immigration journey to Portugal. We are pleased to present this personalised proposal outlining our recommended services and fees."
-DEFAULT_P2 = "With deep expertise in Professional Mobility and Immigration Services, RELOCARING strives to achieve excellence and deliver integrated, end-to-end solutions — offering peace of mind and a single, trusted point of contact throughout your entire process."
-DEFAULT_P3 = "Our team works alongside qualified lawyers and solicitors to ensure that every aspect of your residency, legal and administrative requirements is handled professionally and with the care your move deserves."
+DEFAULT_INTRO = """Our sincere thanks for choosing RELOCARING to assist you with your relocation and immigration journey to Portugal. We are pleased to present this personalised proposal outlining our recommended services and fees.
+
+With deep expertise in Professional Mobility and Immigration Services, RELOCARING strives to achieve excellence and deliver integrated, end-to-end solutions — offering peace of mind and a single, trusted point of contact throughout your entire process.
+
+Our team works alongside qualified lawyers and solicitors to ensure that every aspect of your residency, legal and administrative requirements is handled professionally and with the care your move deserves."""
+
+DEFAULT_FEE_TEXT = "The fees outlined below are based on RELOCARING's understanding of your requirements at this stage. All fees are indicative and may be revised following review of further documentation. VAT, public costs, government fees, translations and certified copies are not included unless otherwise stated."
+
+DEFAULT_PAYMENT = "50% upon acceptance of this proposal  +  50% upon submission of the process"
+
+DEFAULT_PRIVACY = """As part of your immigration and relocation process with Relocaring, Lda, we are required to gather and process sensitive personal information about you. The security and privacy of your personal information is of the utmost importance to us.
+
+Your personal information will be stored in our secure database (SharePoint / Microsoft 365) and is always encrypted in transit and at rest. Physical copies are stored securely on-site and accessed only by your dedicated consultant when required for processing.
+
+Your personal data may be shared with our business partners and relevant public entities solely to fulfil the services agreed with you. Beyond the agreed scope, it will not be processed or shared for any other purpose.
+
+At any time you may request access to, update, withdraw consent for, or request deletion of your personal data by contacting info@relocaring.com."""
+
+DEFAULT_TC = """1. Validity & Payment
+This proposal is valid for 60 days. Fees are invoiced 50% upon acceptance and 50% upon submission. All services must be authorised in writing.
+
+2. Pricing & VAT
+All prices are in Euros and subject to VAT. Each invoice will be itemised by service. Fees are estimates; additional details may impact final costs.
+
+3. Exclusions
+Services do not include translation fees, taxes, Government fees, courier costs, bank charges or other applicable third-party charges.
+
+4. Liability
+RELOCARING assumes no responsibility for non-execution due to reasons beyond its control. Timing depends on public entities and timely delivery of documentation.
+
+5. Out-of-Hours Services
+Services outside regular business hours, on weekends or public holidays incur a 30% surcharge, unless otherwise agreed in advance.
+
+6. Additional Hours
+Additional hours may be charged if the client: (a) fails to provide required documents in due time; (b) provides incomplete information; (c) requests out-of-scope services; or (d) requires extra hours due to their own actions.
+
+7. Third-Party Partners
+RELOCARING may engage qualified third-party partners for specific services. All legal matters are handled by lawyers or solicitors.
+
+8. Displacement Fees
+Fees apply for distances exceeding 20 km from the Lisbon radius at €0.42/km.
+
+9. Late Payment
+Interest on late payment applies in accordance with Portuguese law.
+
+10. Cancellations
+Relocation: cancellable free of charge up to two weeks before arrival if under 2 hours of work performed. Immigration: 50% due if expertise already provided; 100% due after submission."""
 
 DEFAULT_CARDS = {
     "VISA & IMMIGRATION":  "Full management of your visa application, documentation review, AIMA appointments and residence permit.",
@@ -157,7 +201,8 @@ DEFAULT_CARDS = {
 
 # ── PDF generator ─────────────────────────────────────────────────────
 def generate_pdf(client_name, service_description, proposal_date,
-                 proposal_number, services, intro_paragraphs, cards_overview):
+                 proposal_number, services, intro_text, cards_overview,
+                 fee_text, payment_text, privacy_text, tc_text):
 
     W, H = A4
     buffer = io.BytesIO()
@@ -260,9 +305,9 @@ def generate_pdf(client_name, service_description, proposal_date,
     story.append(Spacer(1, 0.3*cm))
     story.append(Paragraph(f"Dear {client_name},",
         ps('sal', fontName='Helvetica-Bold', fontSize=11, textColor=TEAL_DARK, spaceAfter=14)))
-    for para_text in intro_paragraphs:
+    for para_text in intro_text.split('\n\n'):
         if para_text.strip():
-            story.append(Paragraph(para_text.replace("RELOCARING", "<b>RELOCARING</b>"), S_BODY))
+            story.append(Paragraph(para_text.strip().replace("RELOCARING", "<b>RELOCARING</b>"), S_BODY))
     story.append(Spacer(1, 0.5*cm))
 
     card_w = (W - 4.0*cm - 0.5*cm) / 2
@@ -296,7 +341,7 @@ def generate_pdf(client_name, service_description, proposal_date,
     story.append(Paragraph("SERVICES & FEES", S_LABEL))
     story.append(Spacer(1, 0.3*cm))
     story.append(Paragraph("Fee Proposal", S_SECTION))
-    story.append(Paragraph("The fees outlined below are based on RELOCARING's understanding of your requirements at this stage. All fees are indicative and may be revised following review of further documentation. VAT, public costs, government fees, translations and certified copies are not included unless otherwise stated.", S_BODY))
+    story.append(Paragraph(fee_text.replace("RELOCARING", "<b>RELOCARING</b>"), S_BODY))
     story.append(Spacer(1, 0.2*cm))
 
     col_w = [8.5*cm, 1.4*cm, 2.7*cm, 2.0*cm, 2.4*cm]
@@ -356,11 +401,9 @@ def generate_pdf(client_name, service_description, proposal_date,
     story.append(Paragraph("Notice of Terms of Use & Privacy Policy", S_SECTION))
     story.append(Paragraph("Please read this document carefully before signing.", S_SMALL))
     story.append(Spacer(1, 0.2*cm))
-    for para in ["As part of your immigration and relocation process with Relocaring, Lda, we are required to gather and process sensitive personal information about you. The security and privacy of your personal information is of the utmost importance to us.",
-                 "Your personal information will be stored in our secure database (SharePoint / Microsoft 365) and is always encrypted in transit and at rest. Physical copies are stored securely on-site and accessed only by your dedicated consultant when required for processing.",
-                 "Your personal data may be shared with our business partners and relevant public entities solely to fulfil the services agreed with you. Beyond the agreed scope, it will not be processed or shared for any other purpose.",
-                 f"At any time you may request access to, update, withdraw consent for, or request deletion of your personal data by contacting {COMPANY_EMAIL}."]:
-        story.append(Paragraph(para, S_BODY))
+    for para in privacy_text.split('\n\n'):
+        if para.strip():
+            story.append(Paragraph(para.strip(), S_BODY))
     story.append(Spacer(1, 0.4*cm))
     story.append(Table([[Paragraph(
         f"I, <b>{client_name}</b>, give my informed consent to the gathering, storage and processing of mine and my family's personal data by Relocaring Lda., their Partners and relevant Public entities, for the purposes described above.",
@@ -385,28 +428,23 @@ def generate_pdf(client_name, service_description, proposal_date,
     story.append(Spacer(1, 0.3*cm))
     story.append(Paragraph("Relocation and Immigration — Terms & Conditions", S_TC_HEAD))
     story.append(Spacer(1, 0.1*cm))
-    for i, (h, t) in enumerate([
-        ("Validity & Payment", "This proposal is valid for 60 days. Fees are invoiced 50% upon acceptance and 50% upon submission. All services must be authorised in writing."),
-        ("Pricing & VAT", "All prices are in Euros and subject to VAT. Each invoice will be itemised by service. Fees are estimates; additional details may impact final costs."),
-        ("Exclusions", "Services do not include translation fees, taxes, Government fees, courier costs, bank charges or other applicable third-party charges."),
-        ("Liability", "RELOCARING assumes no responsibility for non-execution due to reasons beyond its control. Timing depends on public entities and timely delivery of documentation."),
-        ("Out-of-Hours Services", "Services outside regular business hours, on weekends or public holidays incur a 30% surcharge, unless otherwise agreed in advance."),
-        ("Additional Hours", "Additional hours may be charged if the client: (a) fails to provide required documents in due time; (b) provides incomplete information; (c) requests out-of-scope services; or (d) requires extra hours due to their own actions."),
-        ("Third-Party Partners", "RELOCARING may engage qualified third-party partners for specific services. All legal matters are handled by lawyers or solicitors."),
-        ("Displacement Fees", "Fees apply for distances exceeding 20 km from the Lisbon radius at €0.42/km."),
-        ("Late Payment", "Interest on late payment applies in accordance with Portuguese law."),
-        ("Cancellations", "Relocation: cancellable free of charge up to two weeks before arrival if under 2 hours of work performed. Immigration: 50% due if expertise already provided; 100% due after submission."),
-    ], 1):
-        story.append(Paragraph(f'<b>{i}. {h}</b>', ps(f'tchi{i}', fontName='Helvetica-Bold', fontSize=8, textColor=TEAL_DARK, spaceAfter=2)))
-        story.append(Paragraph(t, S_TC))
+    for clause in tc_text.strip().split('\n\n'):
+        if clause.strip():
+            lines = clause.strip().split('\n', 1)
+            heading = lines[0].strip()
+            body_text = lines[1].strip() if len(lines) > 1 else ''
+            story.append(Paragraph(f'<b>{heading}</b>', ps('tch_item', fontName='Helvetica-Bold', fontSize=8, textColor=TEAL_DARK, spaceAfter=2)))
+            if body_text:
+                story.append(Paragraph(body_text, S_TC))
     story.append(Spacer(1, 0.4*cm))
     story.append(HRFlowable(width='100%', thickness=0.5, color=GREY_RULE, spaceAfter=10))
     story.append(Table([[Paragraph("RELOCARING, LDA", ps('rld', fontName='Helvetica-Bold', fontSize=9, textColor=TEAL_DARK)),
-                         Paragraph("CLIENT ACCEPTANCE", ps('caa', fontName='Helvetica-Bold', fontSize=9, textColor=WHITE))],
-                        [Paragraph(" ", ps('sp')), Paragraph("Date: ___________________________", ps('cad', fontName='Helvetica', fontSize=8.5, textColor=WHITE))],
-                        [Paragraph(" ", ps('sp2')), Paragraph("Signature: ______________________", ps('cas', fontName='Helvetica', fontSize=8.5, textColor=WHITE))]],
+                         Paragraph("CLIENT ACCEPTANCE", ps('caa', fontName='Helvetica-Bold', fontSize=9, textColor=TEAL_DARK))],
+                        [Paragraph(" ", ps('sp')), Paragraph("Date: ___________________________", ps('cad', fontName='Helvetica', fontSize=8.5, textColor=TEAL_MID))],
+                        [Paragraph(" ", ps('sp2')), Paragraph("Signature: ______________________", ps('cas', fontName='Helvetica', fontSize=8.5, textColor=TEAL_MID))]],
                        colWidths=[(W-4.0*cm)*0.45,(W-4.0*cm)*0.55],
-                       style=[('BACKGROUND',(1,0),(1,-1),TEAL_DARK),('LINEABOVE',(1,0),(1,-1),3,RED),
+                       style=[('BOX',(1,0),(1,-1),2,RED),
+                              ('LINEABOVE',(1,0),(1,0),3,RED),
                               ('LEFTPADDING',(0,0),(-1,-1),8),('RIGHTPADDING',(0,0),(-1,-1),8),
                               ('TOPPADDING',(0,0),(-1,-1),7),('BOTTOMPADDING',(0,0),(-1,-1),7),
                               ('VALIGN',(0,0),(-1,-1),'MIDDLE')]))
@@ -447,32 +485,30 @@ with col3:
 
 st.markdown("---")
 
-# ── SECTION 2: Introduction paragraphs ───────────────────────────────
+# ── SECTION 2: Introduction text ────────────────────────────────────
 st.markdown("### ✍️ Introduction Text")
-st.caption("Toggle each paragraph on/off and edit the text directly if needed.")
+st.caption("Edit the text directly. Use a blank line between paragraphs.")
+intro_text = st.text_area("", value=DEFAULT_INTRO, height=200, key="intro_text",
+                          label_visibility="collapsed")
 
-intro_paragraphs = []
+st.markdown("---")
 
-with st.expander("📝 Paragraph 1 — Thanks & purpose", expanded=True):
-    show_p1 = st.checkbox("Include", value=True, key="show_p1")
-    p1 = st.text_area("", value=DEFAULT_P1, height=90, key="p1", disabled=not show_p1)
-    if show_p1: intro_paragraphs.append(p1)
+# ── SECTION 2b: Other editable texts ─────────────────────────────────
+with st.expander("📄 Fee Proposal text (Page 3)", expanded=False):
+    fee_text = st.text_area("", value=DEFAULT_FEE_TEXT, height=100, key="fee_text",
+                            label_visibility="collapsed")
 
-with st.expander("📝 Paragraph 2 — Expertise & solutions", expanded=True):
-    show_p2 = st.checkbox("Include", value=True, key="show_p2")
-    p2 = st.text_area("", value=DEFAULT_P2, height=90, key="p2", disabled=not show_p2)
-    if show_p2: intro_paragraphs.append(p2)
+with st.expander("💳 Payment Conditions text (Page 3)", expanded=False):
+    payment_text = st.text_area("", value=DEFAULT_PAYMENT, height=60, key="payment_text",
+                                label_visibility="collapsed")
 
-with st.expander("📝 Paragraph 3 — Lawyers & care", expanded=True):
-    show_p3 = st.checkbox("Include", value=True, key="show_p3")
-    p3 = st.text_area("", value=DEFAULT_P3, height=90, key="p3", disabled=not show_p3)
-    if show_p3: intro_paragraphs.append(p3)
+with st.expander("🔒 Notice of Terms of Use & Privacy Policy (Page 4)", expanded=False):
+    privacy_text = st.text_area("", value=DEFAULT_PRIVACY, height=200, key="privacy_text",
+                                label_visibility="collapsed")
 
-with st.expander("📝 Custom paragraph (optional)", expanded=False):
-    show_custom = st.checkbox("Include a custom paragraph", value=False, key="show_custom")
-    custom_p = st.text_area("", placeholder="Add a personalised note for this client...",
-                            height=90, key="custom_para", disabled=not show_custom)
-    if show_custom and custom_p.strip(): intro_paragraphs.append(custom_p)
+with st.expander("📋 Terms & Conditions (Page 5)", expanded=False):
+    tc_text = st.text_area("", value=DEFAULT_TC, height=300, key="tc_text",
+                           label_visibility="collapsed")
 
 st.markdown("---")
 
@@ -594,7 +630,7 @@ if st.button("⬇️ Generate & Download PDF", type="primary", use_container_wid
     if not client_name:           errors.append("Client name is required.")
     if not service_description:   errors.append("Service description for cover is required.")
     if not services:              errors.append("Add at least one service.")
-    if not intro_paragraphs:      errors.append("Include at least one introduction paragraph.")
+    if not intro_text.strip():     errors.append("Introduction text cannot be empty.")
 
     if errors:
         for e in errors: st.error(e)
@@ -603,7 +639,8 @@ if st.button("⬇️ Generate & Download PDF", type="primary", use_container_wid
             try:
                 pdf_buffer, grand_total = generate_pdf(
                     client_name, service_description, proposal_date_str,
-                    proposal_number, services, intro_paragraphs, selected_cards
+                    proposal_number, services, intro_text, selected_cards,
+                    fee_text, payment_text, privacy_text, tc_text
                 )
                 filename = f"Relocaring_Proposal_{client_name.replace(' ', '_')}.pdf"
                 st.download_button(
