@@ -500,23 +500,38 @@ st.caption("Select a service — the 2026 price loads automatically. You can ove
 service_labels = list(SERVICE_CATALOGUE.keys())
 services = []
 
+# ── Initialise session state for all service rows on first load ───────
+for i in range(1, 9):
+    if f"sel_{i}" not in st.session_state:
+        st.session_state[f"sel_{i}"] = "— Select a service —"
+    if f"price_{i}" not in st.session_state:
+        st.session_state[f"price_{i}"] = 0.0
+    if f"prev_sel_{i}" not in st.session_state:
+        st.session_state[f"prev_sel_{i}"] = "— Select a service —"
+
 for i in range(1, 9):
     with st.expander(f"Service {i}", expanded=(i <= 2)):
         c1, c2, c3, c4 = st.columns([3, 1.5, 0.8, 1.8])
 
         with c1:
             selected = st.selectbox("Service", options=service_labels,
-                                    key=f"sel_{i}", label_visibility="collapsed")
+                                    key=f"sel_{i}",
+                                    label_visibility="collapsed")
 
         pdf_desc, default_price = SERVICE_CATALOGUE[selected]
 
+        # ── Auto-update price when service changes ────────────────────
+        if selected != st.session_state[f"prev_sel_{i}"]:
+            st.session_state[f"price_{i}"] = float(default_price)
+            st.session_state[f"prev_sel_{i}"] = selected
+
         with c2:
             price = st.number_input("Price €", min_value=0.0,
-                                    value=float(default_price),
                                     step=10.0, format="%.2f",
-                                    key=f"price_{i}", label_visibility="collapsed")
+                                    key=f"price_{i}",
+                                    label_visibility="collapsed")
             is_auto = (price == default_price and default_price > 0)
-            st.caption("🟢 Auto price" if is_auto else "✏️ Custom price")
+            st.caption("🟢 Auto price" if is_auto else ("✏️ Custom price" if price > 0 else ""))
 
         with c3:
             qty = st.number_input("Qty", min_value=1, value=1, step=1,
